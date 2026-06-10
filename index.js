@@ -53,31 +53,30 @@ app.get('/enroll', (req, res) => {
 })
 
 // ─── Callback: Apple POSTs device info here after profile install ─────────────
+// iOS does a preflight to this URL before showing the install button — MUST return 200
 app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (req, res) => {
+  // Respond immediately with a valid profile so iOS never sees an error
+  const profile = generateEnrolledProfile()
+  res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+  res.send(profile)
+
+  // Best-effort background work — failures don't affect the install
   try {
     const device = parseUDIDPayload(req.body)
     const { UDID: udid, DEVICE_NAME: name = 'Unknown', PRODUCT: product = 'Unknown' } = device
-
     console.log(`[enroll] ${name} (${product}) — ${udid}`)
-
-    // Register in Apple Developer — 409 means already registered, that's fine
-    const result = await registerDevice(udid, `${name} - ${product}`)
-    if (result.errors) {
-      const status = result.errors[0]?.status
-      if (status !== '409') console.warn('[apple-api]', JSON.stringify(result.errors))
-    } else {
-      console.log(`[apple-api] Registered ${udid}`)
-    }
-
-    await sendNotification(udid, name, product)
-
-    // iOS requires a valid mobileconfig response or it shows an error
-    const profile = generateEnrolledProfile()
-    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-    res.send(profile)
+    try {
+      const result = await registerDevice(udid, `${name} - ${product}`)
+      if (result.errors) {
+        const status = result.errors[0]?.status
+        if (status !== '409') console.warn('[apple-api]', JSON.stringify(result.errors))
+      } else {
+        console.log(`[apple-api] Registered ${udid}`)
+      }
+    } catch (e) { console.error('[apple-api] failed:', e.message) }
+    try { await sendNotification(udid, name, product) } catch (e) { console.error('[notify] failed:', e.message) }
   } catch (err) {
-    console.error('[enroll error]', err.message)
-    res.status(500).send('Enrollment failed')
+    console.error('[enroll] parse failed:', err.message)
   }
 })
 
