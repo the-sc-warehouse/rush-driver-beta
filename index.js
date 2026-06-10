@@ -52,38 +52,76 @@ app.get('/enroll', (req, res) => {
   }
 })
 
-// ─── Callback: Apple POSTs device info here after profile install ─────────────
-// iOS does a preflight to this URL before showing the install button — MUST return 200
+// ─── Callback: Apple POSTs PKCS7-signed device info here ─────────────────────
+// iOS 16+ requires the response to be encrypted with the device's own certificate.
 app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (req, res) => {
-  // Respond immediately with a signed profile — iOS rejects unsigned responses
+  const tmp = os.tmpdir()
+  const ts  = Date.now()
+  const payloadFile   = path.join(tmp, `payload_${ts}.der`)
+  const deviceCert    = path.join(tmp, `devcert_${ts}.pem`)
+  const profileFile   = path.join(tmp, `profile_${ts}.xml`)
+  const signedFile    = path.join(tmp, `signed_${ts}.der`)
+  const encryptedFile = path.join(tmp, `enc_${ts}.der`)
+  const serverCert    = path.join(tmp, `srvcert_${ts}.pem`)
+  const serverKey     = path.join(tmp, `srvkey_${ts}.pem`)
+  const cleanup = () => [payloadFile, deviceCert, profileFile, signedFile, encryptedFile, serverCert, serverKey]
+    .forEach(f => { try { fs.unlinkSync(f) } catch (_) {} })
+
   try {
-    const signed = signProfile(generateEnrolledProfile())
+    fs.writeFileSync(payloadFile, req.body)
+
+    // Extract the device's certificate from the signed POST body
+    execSync(`openssl pkcs7 -inform DER -in "${payloadFile}" -print_certs -out "${deviceCert}" 2>/dev/null`, { timeout: 5000 })
+
+    // Write server signing cert/key
+    fs.writeFileSync(serverCert, Buffer.from(process.env.SIGN_CERT_B64, 'base64').toString())
+    fs.writeFileSync(serverKey,  Buffer.from(process.env.SIGN_KEY_B64,  'base64').toString())
+
+    // Generate and sign the response profile
+    const profileXml = generateEnrolledProfile()
+    fs.writeFileSync(profileFile, profileXml)
+    execSync(
+      `openssl smime -sign -in "${profileFile}" -signer "${serverCert}" -inkey "${serverKey}" -certfile "${serverCert}" -outform DER -nodetach -out "${signedFile}"`,
+      { timeout: 10000 }
+    )
+
+    // Encrypt the signed profile with the device's public key
+    execSync(
+      `openssl smime -encrypt -aes256 -binary -in "${signedFile}" -inform DER -outform DER -out "${encryptedFile}" "${deviceCert}"`,
+      { timeout: 10000 }
+    )
+
+    const encrypted = fs.readFileSync(encryptedFile)
+    cleanup()
+
     res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-    res.send(signed)
-  } catch (e) {
-    console.error('[callback] sign failed:', e.message)
-    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-    res.send(generateEnrolledProfile())
+    res.send(encrypted)
+  } catch (err) {
+    console.error('[callback] error:', err.message)
+    cleanup()
+    // Fallback: signed-only response
+    try {
+      res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+      res.send(signProfile(generateEnrolledProfile()))
+    } catch (e) { res.status(500).send('Enrollment failed') }
   }
 
-  // Best-effort background work — failures don't affect the install
-  try {
-    const device = parseUDIDPayload(req.body)
-    const { UDID: udid, DEVICE_NAME: name = 'Unknown', PRODUCT: product = 'Unknown' } = device
-    console.log(`[enroll] ${name} (${product}) — ${udid}`)
+  // Best-effort background: parse UDID, register device, notify
+  setImmediate(async () => {
     try {
-      const result = await registerDevice(udid, `${name} - ${product}`)
-      if (result.errors) {
-        const status = result.errors[0]?.status
-        if (status !== '409') console.warn('[apple-api]', JSON.stringify(result.errors))
-      } else {
-        console.log(`[apple-api] Registered ${udid}`)
-      }
-    } catch (e) { console.error('[apple-api] failed:', e.message) }
-    try { await sendNotification(udid, name, product) } catch (e) { console.error('[notify] failed:', e.message) }
-  } catch (err) {
-    console.error('[enroll] parse failed:', err.message)
-  }
+      const device = parseUDIDPayload(req.body)
+      const { UDID: udid, DEVICE_NAME: name = 'Unknown', PRODUCT: product = 'Unknown' } = device
+      console.log(`[enroll] ${name} (${product}) — ${udid}`)
+      try {
+        const result = await registerDevice(udid, `${name} - ${product}`)
+        if (result.errors) {
+          const s = result.errors[0]?.status
+          if (s !== '409') console.warn('[apple-api]', JSON.stringify(result.errors))
+        } else { console.log(`[apple-api] Registered ${udid}`) }
+      } catch (e) { console.error('[apple-api]', e.message) }
+      try { await sendNotification(udid, name, product) } catch (e) { console.error('[notify]', e.message) }
+    } catch (e) { console.error('[enroll parse]', e.message) }
+  })
 })
 
 // ─── OTA manifest: itms-services:// install points here ──────────────────────
