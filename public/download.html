@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Install Rush Driver</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: #09080f;
+      color: #f0eeff;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #100e1a;
+      border: 1px solid #221e36;
+      border-radius: 20px;
+      padding: 40px 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .icon-wrap {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .icon-wrap svg { width: 36px; height: 36px; color: #fff; }
+
+    h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+
+    .version { font-size: 13px; color: #4e4470; margin-bottom: 32px; }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      border-radius: 14px;
+      text-decoration: none;
+      margin-bottom: 20px;
+      transition: opacity 0.15s;
+    }
+
+    .btn svg { width: 20px; height: 20px; }
+    .btn:active { opacity: 0.85; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1a1630;
+      margin: 28px 0;
+    }
+
+    .steps {
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step { display: flex; align-items: flex-start; gap: 14px; }
+
+    .step-num {
+      background: #1e1a32;
+      border: 1px solid #2e2650;
+      color: #9b72f5;
+      font-weight: 700;
+      font-size: 12px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text { font-size: 14px; color: #6b5f8a; line-height: 1.55; }
+    .step-text strong { color: #c4b8e8; }
+
+    .desktop-notice {
+      background: #130f20;
+      border: 1px solid #221e36;
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .desktop-notice svg { width: 32px; height: 32px; color: #4e4470; }
+
+    .desktop-notice p {
+      font-size: 14px;
+      color: #6b5f8a;
+      line-height: 1.55;
+    }
+
+    .desktop-notice strong { color: #9b72f5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/>
+        <path d="M19 17h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/>
+        <path d="M5 9h14l-1.5-4h-11L5 9z"/>
+        <rect x="1" y="9" width="22" height="8" rx="2"/>
+        <circle cx="7" cy="17" r="2"/>
+        <circle cx="17" cy="17" r="2"/>
+      </svg>
+    </div>
+
+    <h1>Rush Driver</h1>
+    <p class="version" id="version">Beta</p>
+
+    <div id="ios-content" style="display:none">
+      <a class="btn" id="install-btn" href="#">
+        <!-- Download icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Install Rush Driver
+      </a>
+
+      <hr class="divider" />
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Tap <strong>Install Rush Driver</strong> above</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Tap <strong>Install</strong> when iOS asks for confirmation</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">The app will appear on your home screen when it finishes downloading</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            If prompted, go to <strong>Settings &rarr; General &rarr; VPN &amp; Device Management</strong>
+            and trust the developer profile
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="desktop-content" style="display:none">
+      <div class="desktop-notice">
+        <!-- Smartphone icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+          <line x1="12" y1="18" x2="12.01" y2="18"/>
+        </svg>
+        <p>Open this page on your <strong>iPhone in Safari</strong> to install the app. The install button only works on iOS.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+    const manifestUrl = `${location.origin}/manifest.plist`
+    const installUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(manifestUrl)}`
+
+    document.getElementById('ios-content').style.display = isIOS ? 'block' : 'none'
+    document.getElementById('desktop-content').style.display = isIOS ? 'none' : 'block'
+
+    const btn = document.getElementById('install-btn')
+    if (btn) btn.href = installUrl
+
+    fetch('/manifest.plist')
+      .then(r => r.text())
+      .then(xml => {
+        const match = xml.match(/<key>bundle-version<\/key>\s*<string>([^<]+)<\/string>/)
+        if (match) document.getElementById('version').textContent = `Version ${match[1]} · Beta`
+      })
+      .catch(() => {})
+  </script>
+</body>
+</html>
