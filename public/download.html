@@ -43,14 +43,13 @@
     .icon-wrap svg { width: 36px; height: 36px; color: #fff; }
 
     h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-
-    .version { font-size: 13px; color: #4e4470; margin-bottom: 32px; }
+    .subtitle { font-size: 14px; color: #6b5f8a; margin-bottom: 32px; line-height: 1.5; }
 
     .btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       width: 100%;
       padding: 16px;
       background: linear-gradient(135deg, #7c3aed, #a855f7);
@@ -59,27 +58,34 @@
       font-weight: 700;
       border-radius: 14px;
       text-decoration: none;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       transition: opacity 0.15s;
     }
+    .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .btn:active { opacity: 0.8; }
 
-    .btn svg { width: 20px; height: 20px; }
-    .btn:active { opacity: 0.85; }
+    .btn-secondary {
+      background: #1e1a32;
+      border: 1px solid #2e2650;
+      color: #c4b8e8;
+      font-size: 15px;
+    }
 
     .divider {
       border: none;
       border-top: 1px solid #1a1630;
-      margin: 28px 0;
+      margin: 24px 0;
     }
 
     .steps {
       text-align: left;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
+      margin-top: 20px;
     }
 
-    .step { display: flex; align-items: flex-start; gap: 14px; }
+    .step { display: flex; align-items: flex-start; gap: 12px; }
 
     .step-num {
       background: #1e1a32;
@@ -87,38 +93,39 @@
       color: #9b72f5;
       font-weight: 700;
       font-size: 12px;
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      margin-top: 1px;
+      margin-top: 2px;
     }
 
-    .step-text { font-size: 14px; color: #6b5f8a; line-height: 1.55; }
+    .step-text { font-size: 13px; color: #6b5f8a; line-height: 1.55; }
     .step-text strong { color: #c4b8e8; }
 
+    .notice {
+      background: #0f0b1a;
+      border: 1px solid #1e1a30;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #4e4470;
+      line-height: 1.5;
+      margin-top: 20px;
+      text-align: left;
+    }
+
     .desktop-notice {
-      background: #130f20;
-      border: 1px solid #221e36;
-      border-radius: 14px;
-      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
     }
-
     .desktop-notice svg { width: 32px; height: 32px; color: #4e4470; }
-
-    .desktop-notice p {
-      font-size: 14px;
-      color: #6b5f8a;
-      line-height: 1.55;
-    }
-
+    .desktop-notice p { font-size: 14px; color: #6b5f8a; line-height: 1.55; }
     .desktop-notice strong { color: #9b72f5; }
   </style>
 </head>
@@ -136,64 +143,70 @@
     </div>
 
     <h1>Rush Driver</h1>
-    <p class="version" id="version">Beta</p>
+    <p class="subtitle" id="subtitle">Beta</p>
 
     <div id="ios-content" style="display:none">
-      <a class="btn" id="install-btn" href="#">
-        <!-- Download icon -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Install Rush Driver
-      </a>
 
-      <hr class="divider" />
+      <!-- Step 1: enroll -->
+      <div id="step1">
+        <a class="btn" href="/enroll">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Step 1 — Register Device
+        </a>
 
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-text">Tap <strong>Install Rush Driver</strong> above</div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-text">Tap <strong>Install</strong> when iOS asks for confirmation</div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-text">The app will appear on your home screen when it finishes downloading</div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-text">
-            If prompted, go to <strong>Settings &rarr; General &rarr; VPN &amp; Device Management</strong>
-            and trust the developer profile
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text">Tap <strong>Register Device</strong> — Safari will download a configuration profile</div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text">Open <strong>Settings → General → VPN &amp; Device Management</strong> and install the profile</div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text">Your device is now registered. A new build will be sent to you — come back here and tap <strong>Install App</strong></div>
           </div>
         </div>
+
+        <hr class="divider" />
+
+        <a class="btn btn-secondary" id="install-btn" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Step 2 — Install App
+        </a>
+
+        <div class="notice">
+          Already registered your device? Tap <strong>Install App</strong> above. If it fails, your UDID may not be in this build yet — register and wait for a new build.
+        </div>
       </div>
+
     </div>
 
     <div id="desktop-content" style="display:none">
       <div class="desktop-notice">
-        <!-- Smartphone icon -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
           <line x1="12" y1="18" x2="12.01" y2="18"/>
         </svg>
-        <p>Open this page on your <strong>iPhone in Safari</strong> to install the app. The install button only works on iOS.</p>
+        <p>Open this page on your <strong>iPhone in Safari</strong> to install the app.</p>
       </div>
     </div>
   </div>
 
   <script>
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
-    const manifestUrl = `${location.origin}/manifest.plist`
-    const installUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(manifestUrl)}`
-
     document.getElementById('ios-content').style.display = isIOS ? 'block' : 'none'
     document.getElementById('desktop-content').style.display = isIOS ? 'none' : 'block'
 
+    const manifestUrl = `${location.origin}/manifest.plist`
+    const installUrl = `itms-services://?action=download-manifest&url=${encodeURIComponent(manifestUrl)}`
     const btn = document.getElementById('install-btn')
     if (btn) btn.href = installUrl
 
@@ -201,7 +214,7 @@
       .then(r => r.text())
       .then(xml => {
         const match = xml.match(/<key>bundle-version<\/key>\s*<string>([^<]+)<\/string>/)
-        if (match) document.getElementById('version').textContent = `Version ${match[1]} · Beta`
+        if (match) document.getElementById('subtitle').textContent = `Version ${match[1]} · Beta`
       })
       .catch(() => {})
   </script>
