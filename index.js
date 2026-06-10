@@ -55,10 +55,16 @@ app.get('/enroll', (req, res) => {
 // ─── Callback: Apple POSTs device info here after profile install ─────────────
 // iOS does a preflight to this URL before showing the install button — MUST return 200
 app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (req, res) => {
-  // Respond immediately with a valid profile so iOS never sees an error
-  const profile = generateEnrolledProfile()
-  res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-  res.send(profile)
+  // Respond immediately with a signed profile — iOS rejects unsigned responses
+  try {
+    const signed = signProfile(generateEnrolledProfile())
+    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+    res.send(signed)
+  } catch (e) {
+    console.error('[callback] sign failed:', e.message)
+    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+    res.send(generateEnrolledProfile())
+  }
 
   // Best-effort background work — failures don't affect the install
   try {
