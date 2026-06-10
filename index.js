@@ -60,34 +60,24 @@ app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (
   const payloadFile   = path.join(tmp, `payload_${ts}.der`)
   const deviceCert    = path.join(tmp, `devcert_${ts}.pem`)
   const profileFile   = path.join(tmp, `profile_${ts}.xml`)
-  const signedFile    = path.join(tmp, `signed_${ts}.der`)
   const encryptedFile = path.join(tmp, `enc_${ts}.der`)
-  const serverCert    = path.join(tmp, `srvcert_${ts}.pem`)
-  const serverKey     = path.join(tmp, `srvkey_${ts}.pem`)
-  const cleanup = () => [payloadFile, deviceCert, profileFile, signedFile, encryptedFile, serverCert, serverKey]
+  const cleanup = () => [payloadFile, deviceCert, profileFile, encryptedFile]
     .forEach(f => { try { fs.unlinkSync(f) } catch (_) {} })
 
   try {
     fs.writeFileSync(payloadFile, req.body)
 
-    // Extract the device's certificate from the signed POST body
-    execSync(`openssl pkcs7 -inform DER -in "${payloadFile}" -print_certs -out "${deviceCert}" 2>/dev/null`, { timeout: 5000 })
+    // Extract only the leaf cert (first cert) for encryption
+    execSync(
+      `openssl pkcs7 -inform DER -in "${payloadFile}" -print_certs 2>/dev/null | openssl x509 -out "${deviceCert}"`,
+      { timeout: 5000 }
+    )
 
-    // Write server signing cert/key
-    fs.writeFileSync(serverCert, Buffer.from(process.env.SIGN_CERT_B64, 'base64').toString())
-    fs.writeFileSync(serverKey,  Buffer.from(process.env.SIGN_KEY_B64,  'base64').toString())
-
-    // Generate and sign the response profile
+    // Encrypt the raw XML profile directly with the device's leaf cert
     const profileXml = generateEnrolledProfile()
     fs.writeFileSync(profileFile, profileXml)
     execSync(
-      `openssl smime -sign -in "${profileFile}" -signer "${serverCert}" -inkey "${serverKey}" -certfile "${serverCert}" -outform DER -nodetach -out "${signedFile}"`,
-      { timeout: 10000 }
-    )
-
-    // Encrypt the signed profile with the device's public key
-    execSync(
-      `openssl smime -encrypt -aes256 -binary -in "${signedFile}" -inform DER -outform DER -out "${encryptedFile}" "${deviceCert}"`,
+      `openssl smime -encrypt -aes256 -binary -in "${profileFile}" -outform DER -out "${encryptedFile}" "${deviceCert}"`,
       { timeout: 10000 }
     )
 
