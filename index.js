@@ -53,47 +53,21 @@ app.get('/enroll', (req, res) => {
 })
 
 // ─── Callback: Apple POSTs PKCS7-signed device info here ─────────────────────
-// iOS 16+ requires the response to be encrypted with the device's own certificate.
 app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (req, res) => {
-  const tmp = os.tmpdir()
-  const ts  = Date.now()
-  const payloadFile   = path.join(tmp, `payload_${ts}.der`)
-  const deviceCert    = path.join(tmp, `devcert_${ts}.pem`)
-  const profileFile   = path.join(tmp, `profile_${ts}.xml`)
-  const encryptedFile = path.join(tmp, `enc_${ts}.der`)
-  const cleanup = () => [payloadFile, deviceCert, profileFile, encryptedFile]
-    .forEach(f => { try { fs.unlinkSync(f) } catch (_) {} })
-
+  // Respond immediately with a signed profile.
+  // Profile Service UDID capture only requires the response to be a valid signed profile —
+  // full PKCS7 encryption is only mandatory for MDM enrollment, not UDID capture.
   try {
-    fs.writeFileSync(payloadFile, req.body)
-
-    // Extract only the leaf cert (first cert) for encryption
-    execSync(
-      `openssl pkcs7 -inform DER -in "${payloadFile}" -print_certs 2>/dev/null | openssl x509 -out "${deviceCert}"`,
-      { timeout: 5000 }
-    )
-
-    // Encrypt the raw XML profile directly with the device's leaf cert
-    const profileXml = generateEnrolledProfile()
-    fs.writeFileSync(profileFile, profileXml)
-    execSync(
-      `openssl smime -encrypt -aes256 -binary -in "${profileFile}" -outform DER -out "${encryptedFile}" "${deviceCert}"`,
-      { timeout: 10000 }
-    )
-
-    const encrypted = fs.readFileSync(encryptedFile)
-    cleanup()
-
+    const signed = signProfile(generateEnrolledProfile())
     res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-    res.send(encrypted)
+    res.send(signed)
+    console.log('[callback] sent signed profile response')
   } catch (err) {
-    console.error('[callback] error:', err.message)
-    cleanup()
-    // Fallback: signed-only response
-    try {
-      res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-      res.send(signProfile(generateEnrolledProfile()))
-    } catch (e) { res.status(500).send('Enrollment failed') }
+    console.error('[callback] sign failed:', err.message)
+    // Last-resort: plain unsigned XML — at minimum iOS will accept the UDID POST
+    const xml = generateEnrolledProfile()
+    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+    res.send(xml)
   }
 
   // Best-effort background: parse UDID, register device, notify
