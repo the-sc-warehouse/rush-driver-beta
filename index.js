@@ -8,7 +8,7 @@ const { sendNotification } = require('./lib/notify')
 
 const app = express()
 
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }))
 
 // ─── Enroll: serve pre-signed profile (signed = no 60-min iOS delay) ─────────
 app.get('/enroll', (req, res) => {
