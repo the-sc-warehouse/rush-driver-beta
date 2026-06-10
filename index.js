@@ -10,12 +10,11 @@ const app = express()
 
 app.use(express.static(path.join(__dirname, 'public')))
 
-// ─── Enroll: tester taps link → iOS downloads + installs this profile ────────
+// ─── Enroll: serve pre-signed profile (signed = no 60-min iOS delay) ─────────
 app.get('/enroll', (req, res) => {
-  const profile = generateEnrollmentProfile(process.env.SERVER_URL)
   res.setHeader('Content-Type', 'application/x-apple-aspen-config')
   res.setHeader('Content-Disposition', 'attachment; filename="RushDriverBeta.mobileconfig"')
-  res.send(profile)
+  res.sendFile(path.join(__dirname, 'public', 'enroll-signed.mobileconfig'))
 })
 
 // ─── Callback: Apple POSTs device info here after profile install ─────────────
