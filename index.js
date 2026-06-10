@@ -87,4 +87,12 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Rush Driver Beta Server on port ${PORT}`)
   console.log(`Enrollment URL: ${process.env.SERVER_URL || `http://localhost:${PORT}`}/enroll`)
+
+  // Ping self every 14 minutes to prevent Render free tier cold starts
+  const selfUrl = process.env.SERVER_URL
+  if (selfUrl) {
+    setInterval(() => {
+      fetch(`${selfUrl}/health`).catch(() => {})
+    }, 14 * 60 * 1000)
+  }
 })
