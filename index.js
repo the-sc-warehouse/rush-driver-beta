@@ -1,6 +1,9 @@
 require('dotenv').config()
 const express = require('express')
 const path = require('path')
+const { execSync } = require('child_process')
+const fs = require('fs')
+const os = require('os')
 const { generateEnrollmentProfile, generateEnrolledProfile } = require('./lib/profiles')
 const { registerDevice } = require('./lib/apple-api')
 const { parseUDIDPayload } = require('./lib/udid')
@@ -10,11 +13,43 @@ const app = express()
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }))
 
-// ─── Enroll: serve pre-signed profile (signed = no 60-min iOS delay) ─────────
+function signProfile(xmlContent) {
+  const certB64 = process.env.SIGN_CERT_B64
+  const keyB64  = process.env.SIGN_KEY_B64
+  if (!certB64 || !keyB64) throw new Error('SIGN_CERT_B64 / SIGN_KEY_B64 not set')
+
+  const tmp     = os.tmpdir()
+  const xmlFile  = path.join(tmp, `profile_${Date.now()}.xml`)
+  const certFile = path.join(tmp, `cert_${Date.now()}.pem`)
+  const keyFile  = path.join(tmp, `key_${Date.now()}.pem`)
+
+  fs.writeFileSync(xmlFile,  xmlContent)
+  fs.writeFileSync(certFile, Buffer.from(certB64, 'base64').toString('utf8'))
+  fs.writeFileSync(keyFile,  Buffer.from(keyB64,  'base64').toString('utf8'))
+
+  try {
+    return execSync(
+      `openssl smime -sign -in "${xmlFile}" -signer "${certFile}" -inkey "${keyFile}" -certfile "${certFile}" -outform DER -nodetach`,
+      { encoding: 'buffer', timeout: 10000 }
+    )
+  } finally {
+    [xmlFile, certFile, keyFile].forEach(f => { try { fs.unlinkSync(f) } catch (_) {} })
+  }
+}
+
+// ─── Enroll: dynamically sign and serve the enrollment profile ────────────────
 app.get('/enroll', (req, res) => {
-  res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-  res.setHeader('Content-Disposition', 'attachment; filename="RushDriverBeta.mobileconfig"')
-  res.sendFile(path.join(__dirname, 'public', 'enroll-signed.mobileconfig'))
+  const serverUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`
+  try {
+    const xml    = generateEnrollmentProfile(serverUrl)
+    const signed = signProfile(xml)
+    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+    res.setHeader('Content-Disposition', 'attachment; filename="RushDriverBeta.mobileconfig"')
+    res.send(signed)
+  } catch (err) {
+    console.error('[enroll] sign failed:', err.message)
+    res.status(500).send('Profile signing failed — check server logs')
+  }
 })
 
 // ─── Callback: Apple POSTs device info here after profile install ─────────────
