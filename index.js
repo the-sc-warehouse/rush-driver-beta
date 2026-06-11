@@ -8,6 +8,7 @@ const { generateEnrollmentProfile, generateEnrolledProfile } = require('./lib/pr
 const { registerDevice } = require('./lib/apple-api')
 const { parseUDIDPayload } = require('./lib/udid')
 const { sendNotification } = require('./lib/notify')
+const { triggerBuildForNewUdid } = require('./lib/github-trigger')
 
 const app = express()
 
@@ -54,9 +55,8 @@ app.get('/enroll', (req, res) => {
 
 // ─── Callback: Apple POSTs PKCS7-signed device info here ─────────────────────
 app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (req, res) => {
-  // Respond immediately with a signed profile.
-  // Profile Service UDID capture only requires the response to be a valid signed profile —
-  // full PKCS7 encryption is only mandatory for MDM enrollment, not UDID capture.
+  // Respond immediately — iOS only needs a valid signed profile back.
+  // All UDID processing happens in the background so the connection isn't held open.
   try {
     const signed = signProfile(generateEnrolledProfile())
     res.setHeader('Content-Type', 'application/x-apple-aspen-config')
@@ -64,13 +64,12 @@ app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (
     console.log('[callback] sent signed profile response')
   } catch (err) {
     console.error('[callback] sign failed:', err.message)
-    // Last-resort: plain unsigned XML — at minimum iOS will accept the UDID POST
     const xml = generateEnrolledProfile()
     res.setHeader('Content-Type', 'application/x-apple-aspen-config')
     res.send(xml)
   }
 
-  // Best-effort background: parse UDID, register device, notify
+  // Best-effort background: parse UDID, register with Apple, notify, trigger build
   setImmediate(async () => {
     try {
       const device = parseUDIDPayload(req.body)
@@ -84,6 +83,7 @@ app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (
         } else { console.log(`[apple-api] Registered ${udid}`) }
       } catch (e) { console.error('[apple-api]', e.message) }
       try { await sendNotification(udid, name, product) } catch (e) { console.error('[notify]', e.message) }
+      triggerBuildForNewUdid(udid, name, product).catch(e => console.error('[github-trigger]', e.message))
     } catch (e) { console.error('[enroll parse]', e.message) }
   })
 })
