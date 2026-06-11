@@ -8,7 +8,6 @@ const { generateEnrollmentProfile, generateEnrolledProfile } = require('./lib/pr
 const { registerDevice } = require('./lib/apple-api')
 const { parseUDIDPayload } = require('./lib/udid')
 const { sendNotification } = require('./lib/notify')
-const { triggerBuildForNewUdid } = require('./lib/github-trigger')
 
 const app = express()
 
@@ -86,8 +85,7 @@ app.post('/enroll/callback', express.raw({ type: '*/*', limit: '2mb' }), async (
           if (s !== '409') console.warn('[apple-api]', JSON.stringify(result.errors))
         } else { console.log(`[apple-api] Registered ${udid}`) }
       } catch (e) { console.error('[apple-api]', e.message) }
-      try { await sendNotification(udid, name, product) } catch (e) { console.error('[notify]', e.message) }
-      triggerBuildForNewUdid(udid, name, product).catch(e => console.error('[github-trigger]', e.message))
+      try { await sendNotification(udid, name, product, req.ip) } catch (e) { console.error('[notify]', e.message) }
     } catch (e) { console.error('[enroll parse]', e.message) }
   })
 })
