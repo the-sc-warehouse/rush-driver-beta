@@ -38,19 +38,23 @@ function signProfile(xmlContent) {
   }
 }
 
-// ─── Enroll: dynamically sign and serve the enrollment profile ────────────────
+// ─── Enroll: serve enrollment profile (dynamic if signing certs set, else static) ─
 app.get('/enroll', (req, res) => {
-  const serverUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`
-  try {
-    const xml    = generateEnrollmentProfile(serverUrl)
-    const signed = signProfile(xml)
-    res.setHeader('Content-Type', 'application/x-apple-aspen-config')
-    res.setHeader('Content-Disposition', 'attachment; filename="RushDriverBeta.mobileconfig"')
-    res.send(signed)
-  } catch (err) {
-    console.error('[enroll] sign failed:', err.message)
-    res.status(500).send('Profile signing failed — check server logs')
+  res.setHeader('Content-Type', 'application/x-apple-aspen-config')
+  res.setHeader('Content-Disposition', 'attachment; filename="RushDriverBeta.mobileconfig"')
+
+  if (process.env.SIGN_CERT_B64 && process.env.SIGN_KEY_B64) {
+    const serverUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`
+    try {
+      const signed = signProfile(generateEnrollmentProfile(serverUrl))
+      return res.send(signed)
+    } catch (err) {
+      console.error('[enroll] dynamic sign failed, falling back to static:', err.message)
+    }
   }
+
+  // Fall back to the pre-signed static file (no cert env vars needed)
+  res.sendFile(path.join(__dirname, 'public', 'enroll-signed.mobileconfig'))
 })
 
 // ─── Callback: Apple POSTs PKCS7-signed device info here ─────────────────────
