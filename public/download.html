@@ -43,8 +43,133 @@
     .icon-wrap svg { width: 36px; height: 36px; color: #fff; }
 
     h1 { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .subtitle { font-size: 14px; color: #6b5f8a; margin-bottom: 32px; line-height: 1.5; }
+    .subtitle { font-size: 14px; color: #6b5f8a; margin-bottom: 24px; line-height: 1.5; }
 
+    /* Developer Mode banner */
+    .dev-mode-banner {
+      background: #1a1208;
+      border: 1px solid #3a2a08;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .dev-mode-banner-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .dev-mode-banner-header svg {
+      width: 18px;
+      height: 18px;
+      color: #f59e0b;
+      flex-shrink: 0;
+    }
+
+    .dev-mode-banner-header strong {
+      font-size: 14px;
+      color: #fbbf24;
+      font-weight: 700;
+    }
+
+    .dev-mode-banner p {
+      font-size: 12px;
+      color: #92733a;
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    .dev-mode-toggle {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dev-mode-path {
+      background: #120e04;
+      border: 1px solid #2a1f06;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .dev-mode-path summary {
+      list-style: none;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #c4923a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .dev-mode-path summary::-webkit-details-marker { display: none; }
+
+    .dev-mode-path summary::after {
+      content: '›';
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+
+    .dev-mode-path[open] summary::after {
+      transform: rotate(90deg);
+    }
+
+    .dev-mode-path-body {
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dev-mode-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .dev-mode-step-num {
+      background: #2a1f06;
+      color: #f59e0b;
+      font-weight: 700;
+      font-size: 10px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .dev-mode-step p {
+      font-size: 12px;
+      color: #92733a;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .dev-mode-step p strong { color: #d4a04a; }
+
+    .dev-already {
+      font-size: 11px;
+      color: #5a4a2a;
+      padding: 8px 12px;
+      background: #120e04;
+      border: 1px solid #2a1f06;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .dev-already strong { color: #9a7a3a; }
+
+    /* Buttons */
     .btn {
       display: flex;
       align-items: center;
@@ -77,6 +202,7 @@
       margin: 24px 0;
     }
 
+    /* Steps */
     .steps {
       text-align: left;
       display: flex;
@@ -105,6 +231,20 @@
 
     .step-text { font-size: 13px; color: #6b5f8a; line-height: 1.55; }
     .step-text strong { color: #c4b8e8; }
+
+    /* Warning inline callout */
+    .warn-callout {
+      background: #0f0d04;
+      border: 1px solid #2a2008;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #7a6030;
+      line-height: 1.55;
+      margin-top: 10px;
+      text-align: left;
+    }
+    .warn-callout strong { color: #c4923a; }
 
     .notice {
       background: #0f0b1a;
@@ -147,46 +287,88 @@
 
     <div id="ios-content" style="display:none">
 
-      <!-- Step 1: enroll -->
-      <div id="step1">
-        <a class="btn" href="/enroll">
+      <!-- Developer Mode banner -->
+      <div class="dev-mode-banner">
+        <div class="dev-mode-banner-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
-          Step 1 — Register Device
-        </a>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-text">Tap <strong>Register Device</strong> — Safari will download a configuration profile</div>
-          </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-text">Open <strong>Settings → General → VPN &amp; Device Management</strong> and install the profile</div>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-text">Your device is now registered. A new build will be sent to you — come back here and tap <strong>Install App</strong></div>
-          </div>
+          <strong>Developer Mode Required</strong>
         </div>
+        <p>iOS 16+ requires Developer Mode to install apps outside the App Store. You only need to do this once.</p>
 
-        <hr class="divider" />
+        <div class="dev-mode-toggle">
+          <details class="dev-mode-path">
+            <summary>I need to enable Developer Mode</summary>
+            <div class="dev-mode-path-body">
+              <div class="dev-mode-step">
+                <div class="dev-mode-step-num">1</div>
+                <p>Open <strong>Settings → Privacy &amp; Security</strong></p>
+              </div>
+              <div class="dev-mode-step">
+                <div class="dev-mode-step-num">2</div>
+                <p>Scroll down and tap <strong>Developer Mode</strong> → toggle it <strong>On</strong></p>
+              </div>
+              <div class="dev-mode-step">
+                <div class="dev-mode-step-num">3</div>
+                <p>Your iPhone will <strong>restart</strong> — after it reboots, tap <strong>Turn On</strong> when the prompt appears</p>
+              </div>
+              <div class="dev-mode-step">
+                <div class="dev-mode-step-num">4</div>
+                <p>Come back to this page and continue below</p>
+              </div>
+            </div>
+          </details>
 
-        <a class="btn btn-secondary" id="install-btn" href="#">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Step 2 — Install App
-        </a>
-
-        <div class="notice">
-          After tapping <strong>Install App</strong>, Safari will show a dialog saying <strong>"Open in iTunes"</strong> — tap <strong>Open</strong> to start the install. That dialog is normal on iOS 16+, not an error.
-          <br><br>
-          If it says "Unable to Download App", your device isn't in this build yet — tap Register Device first.
+          <div class="dev-already">Already enabled? <strong>Continue to Step 1 below.</strong></div>
         </div>
+      </div>
+
+      <!-- Step 1: Register -->
+      <a class="btn" href="/enroll">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Step 1 — Register Device
+      </a>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Tap <strong>Register Device</strong> — Safari will download and install a configuration profile</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Open <strong>Settings → General → VPN &amp; Device Management</strong> and install the profile</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">The profile will show <strong>"Profile Installation Failed"</strong> or a warning — <strong>this is normal and expected.</strong> It just means your device has been registered. Tap <strong>Done</strong> and move on to Step 2.</div>
+        </div>
+      </div>
+
+      <div class="warn-callout">
+        <strong>That error is supposed to happen.</strong> The profile registers your device with Apple — the "failed" message is just iOS telling you it couldn't install a management profile, which is fine. Your device is registered. Continue to Step 2.
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Step 2: Install -->
+      <a class="btn btn-secondary" id="install-btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Step 2 — Install App
+      </a>
+
+      <div class="notice">
+        After tapping <strong>Install App</strong>, Safari will show a dialog saying <strong>"Open in iTunes"</strong> — tap <strong>Open</strong> to start the install. That dialog is normal on iOS 16+, not an error.
+        <br><br>
+        If it says "Unable to Download App", your device isn't in this build yet — wait for a notification that your build is ready.
       </div>
 
     </div>
