@@ -123,6 +123,62 @@ app.get('/manifest.plist', (req, res) => {
 </plist>`)
 })
 
+// ─── TestFlight self-serve enrollment ────────────────────────────────────────
+const BETA_GROUP_ID = 'e605e879-0324-4dc7-acd7-92497227d840' // Beta Members (external)
+
+function ascJwt() {
+  const jwt = require('jsonwebtoken')
+  const now = Math.floor(Date.now() / 1000)
+  const privateKey = (process.env.ASC_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+  if (!privateKey || !process.env.ASC_KEY_ID || !process.env.ASC_ISSUER_ID) throw new Error('ASC creds not set')
+  return jwt.sign(
+    { iss: process.env.ASC_ISSUER_ID, iat: now, exp: now + 1200, aud: 'appstoreconnect-v1' },
+    privateKey,
+    { algorithm: 'ES256', header: { kid: process.env.ASC_KEY_ID, typ: 'JWT' } }
+  )
+}
+
+app.post('/api/beta/join', express.json(), async (req, res) => {
+  const email = (req.body?.email || '').trim().toLowerCase()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ ok: false, error: 'Valid email required' })
+  }
+  try {
+    const bearer = ascJwt()
+    const r = await fetch('https://api.appstoreconnect.apple.com/v1/betaTesters', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data: {
+          type: 'betaTesters',
+          attributes: { email },
+          relationships: {
+            betaGroups: { data: [{ type: 'betaGroups', id: BETA_GROUP_ID }] }
+          }
+        }
+      })
+    })
+    const body = await r.json()
+    if (r.status === 409) {
+      // Already a tester — try to just add them to the group
+      const existingId = body.errors?.[0]?.source?.pointer?.includes('email')
+        ? null
+        : body.errors?.[0]?.id
+      console.log(`[beta/join] ${email} already a tester`)
+      return res.json({ ok: true, already: true })
+    }
+    if (!r.ok) {
+      console.error('[beta/join] ASC error:', JSON.stringify(body))
+      return res.status(502).json({ ok: false, error: 'Failed to add tester' })
+    }
+    console.log(`[beta/join] Added ${email} to TestFlight`)
+    res.json({ ok: true })
+  } catch (e) {
+    console.error('[beta/join]', e.message)
+    res.status(500).json({ ok: false, error: 'Server error' })
+  }
+})
+
 // ─── Health check for Render ──────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }))
 
