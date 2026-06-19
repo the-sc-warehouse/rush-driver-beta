@@ -126,6 +126,54 @@ app.get('/manifest.plist', (req, res) => {
 // ─── Health check for Render ──────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ ok: true }))
 
+// ─── Poll Apple portal for PROCESSING → ENABLED transitions ──────────────────
+async function pollDeviceStatus() {
+  const { registerDevice } = require('./lib/apple-api')
+  try {
+    const token = require('./lib/apple-api').__token?.()
+    // Re-use the JWT generator from apple-api
+    const jwt = require('jsonwebtoken')
+    const now = Math.floor(Date.now() / 1000)
+    const privateKey = (process.env.ASC_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+    if (!privateKey || !process.env.ASC_KEY_ID || !process.env.ASC_ISSUER_ID) return
+
+    const bearer = jwt.sign(
+      { iss: process.env.ASC_ISSUER_ID, iat: now, exp: now + 1200, aud: 'appstoreconnect-v1' },
+      privateKey,
+      { algorithm: 'ES256', header: { kid: process.env.ASC_KEY_ID, typ: 'JWT' } }
+    )
+
+    const res = await fetch('https://api.appstoreconnect.apple.com/v1/devices?limit=200', {
+      headers: { Authorization: `Bearer ${bearer}` }
+    })
+    if (!res.ok) return
+
+    const { data } = await res.json()
+    const nowEnabled = (data || []).filter(d => d.attributes.status === 'ENABLED').map(d => d.attributes.udid)
+
+    // Compare against last known set
+    const prev = pollDeviceStatus._processing || new Set()
+    const flipped = [...prev].filter(u => nowEnabled.includes(u))
+
+    if (flipped.length > 0) {
+      console.log(`[device-poll] ${flipped.length} device(s) now ENABLED:`, flipped)
+      const { sendNotification } = require('./lib/notify')
+      for (const udid of flipped) {
+        await sendNotification(udid, 'Device Activated', 'Now ENABLED — ready for build', null)
+        prev.delete(udid)
+      }
+    }
+
+    // Update tracked set with current PROCESSING devices
+    const processing = (data || []).filter(d => d.attributes.status === 'PROCESSING').map(d => d.attributes.udid)
+    pollDeviceStatus._processing = new Set(processing)
+    if (processing.length > 0) console.log(`[device-poll] ${processing.length} still PROCESSING`)
+  } catch (e) {
+    console.error('[device-poll] error:', e.message)
+  }
+}
+pollDeviceStatus._processing = new Set()
+
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Rush Driver Beta Server on port ${PORT}`)
@@ -138,4 +186,8 @@ app.listen(PORT, () => {
       fetch(`${selfUrl}/health`).catch(() => {})
     }, 14 * 60 * 1000)
   }
+
+  // Poll Apple device status every 30 minutes
+  pollDeviceStatus()
+  setInterval(pollDeviceStatus, 30 * 60 * 1000)
 })
